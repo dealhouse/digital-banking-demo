@@ -1,0 +1,26 @@
+# macOS
+.DS_Store
+
+# Java / Gradle
+**/build/
+**/.gradle/
+**/out/
+
+# SQLite DB (local file)
+core-api/data/
+*.db
+*.db-journal
+
+# Node
+**/node_modules/
+**/dist/
+**/.vite/
+
+# Python
+**/.venv/
+**/__pycache__/
+**/*.pyc
+
+# IDE
+.vscode/
+.idea/
