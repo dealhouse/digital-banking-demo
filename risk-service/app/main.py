@@ -1,7 +1,8 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from pydantic import BaseModel
 from typing import List
 from datetime import datetime
+
 
 app = FastAPI(title="Risk Service", version="0.1.0")
 
@@ -41,3 +42,28 @@ def score(req: ScoreRequest):
         reasons.append("high_total")
 
     return ScoreResponse(riskScore=min(score, 100), reasons=reasons)
+
+# Dev tool
+# @app.post("/risk/echo")  
+# async def echo(request: Request):
+#     raw = await request.body()
+
+#     # Try JSON parse only if raw exists
+#     parsed = None
+#     if raw:
+#         try:
+#             parsed = await request.json()
+#         except Exception:
+#             parsed = None
+
+#     # Return key transport headers so we can compare curl vs Java
+#     interesting = {}
+#     for k in ["content-type", "content-length", "transfer-encoding", "expect", "host", "user-agent"]:
+#         interesting[k] = request.headers.get(k)
+
+#     return {
+#         "httpVersion": request.scope.get("http_version"),
+#         "headers": interesting,
+#         "rawLen": len(raw),
+#         "json": parsed,
+#     }
