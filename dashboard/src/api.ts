@@ -57,4 +57,42 @@ export async function scoreRisk(
   return JSON.parse(text) as RiskScoreResponse
 }
 
+const API_BASE = import.meta.env.VITE_API_BASE ?? "/api";
+const DEMO_TOKEN = import.meta.env.VITE_DEMO_TOKEN ?? "demo-token";
+
+type HttpMethod = "GET" | "POST";
+
+export async function api<T>(
+  path: string,
+  opts?: { method?: HttpMethod; body?: unknown; headers?: Record<string, string> }
+): Promise<T> {
+  const res = await fetch(`${API_BASE}${path}`, {
+    method: opts?.method ?? "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${DEMO_TOKEN}`,
+      ...(opts?.headers ?? {}),
+    },
+    body: opts?.body ? JSON.stringify(opts.body) : undefined,
+  });
+
+  const text = await res.text();
+  const data = text ? JSON.parse(text) : null;
+
+  if (!res.ok) {
+    const msg = data?.error ?? data?.message ?? `${res.status} ${res.statusText}`;
+    throw new Error(msg);
+  }
+
+  return data as T;
+}
+
+export function newIdempotencyKey(): string {
+  // modern browsers
+  if (crypto?.randomUUID) return crypto.randomUUID();
+  // fallback
+  return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
+
 

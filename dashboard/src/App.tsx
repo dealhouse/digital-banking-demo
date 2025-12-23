@@ -3,6 +3,10 @@ import LoginPage from './LoginPage'
 import { protectedPing } from './api'
 import { scoreRisk, type RiskScoreResponse } from './api'
 import { RiskResultCard } from "./components/RiskResultCard"
+import { RiskFlags } from "./components/RiskFlags"
+import { AccountsLedger } from './components/AccountsLedger'
+import { TransferForm } from './components/TransferForm'
+import type { Account } from './types'
 
 import './App.css'
 
@@ -34,7 +38,13 @@ const formError =
   !currencyValid ? "Currency must be a 3-letter code (e.g., CAD, USD)." :
   null
 
+  // Accounts and ledger
+  const [refreshToken, setRefreshToken] = useState(0);
+  const [accounts, setAccounts] = useState<Account[]>([]);
 
+  function refreshAll() {
+    setRefreshToken((x) => x + 1);
+  }
 
   async function runPing() {
   setPingError(null)
@@ -86,6 +96,16 @@ const formError =
       <p>Logged in as <b>{session.email}</b></p>
       {/* <p>Token: <code>{session.token}</code></p> */}
       <section style={{ marginTop: 24 }}>
+
+  <div style={{ maxWidth: 1200, margin: "0 auto", padding: 16, display: "grid", gap: 16 }}>
+      <h2 style={{ margin: 0 }}>Digital Banking Demo</h2>
+
+      <TransferForm accounts={accounts} onTransferSuccess={refreshAll} />
+
+      <AccountsLedger refreshToken={refreshToken} onAccountsLoaded={setAccounts} />
+
+      <RiskFlags refreshToken={refreshToken} />
+    </div>
   <h2>Risk Sandbox</h2>
 
   <div style={{ display: "grid", gap: 10, maxWidth: 360 }}>
