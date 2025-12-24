@@ -21,8 +21,6 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.time.Duration;
 import java.util.UUID;
 
@@ -83,14 +81,14 @@ static void props(DynamicPropertyRegistry registry) {
 
 
     JsonNode j1 = JSON.readTree(r1.body());
-    String transferId1 = j1.path("transferId").asText();
+    String transferId1 = j1.path("transferId").asString();
     assertFalse(transferId1.isBlank(), "transferId missing: " + r1.body());
 
     HttpResponse<String> r2 = post("/api/transfers", body, key);
     assertEquals(200, r2.statusCode(), r2.body());
 
     JsonNode j2 = JSON.readTree(r2.body());
-    String transferId2 = j2.path("transferId").asText();
+    String transferId2 = j2.path("transferId").asString();
     assertEquals(transferId1, transferId2, "same idempotency-key should return same transferId");
   }
 
