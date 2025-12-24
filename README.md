@@ -5,6 +5,9 @@ A small “bank-style” demo showing:
 - Python FastAPI Risk Scoring service
 - React + TypeScript dashboard
 
+![CI](https://github.com/dealhouse/digital-banking-demo/actions/workflows/ci.yml/badge.svg)
+
+
 ## Architecture
 - `core-api/` — REST API for accounts + transfers, idempotency, validation, error handling
 - `risk-service/` — scores transfers and returns `{score, level, reasons}`
