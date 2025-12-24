@@ -2,10 +2,13 @@ import { useMemo, useState } from "react";
 import { api, newIdempotencyKey } from "../api";
 import type { Account, TransferRequest, TransferResponse } from "../types";
 
+
 export function TransferForm({
+  token,
   accounts,
   onTransferSuccess,
 }: {
+  token: string;
   accounts: Account[];
   onTransferSuccess: () => void;
 }) {
@@ -40,11 +43,12 @@ export function TransferForm({
 
       const idKey = newIdempotencyKey();
 
-      const resp = await api<TransferResponse>("/transfers", {
-        method: "POST",
-        body: req,
-        headers: { "Idempotency-Key": idKey },
-      });
+      const resp = await api<TransferResponse>(
+  "/transfers",
+  { method: "POST", body: req, headers: { "Idempotency-Key": idKey } },
+  token
+);
+
 
       setLast(resp);
       onTransferSuccess();

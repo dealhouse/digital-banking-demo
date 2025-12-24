@@ -4,7 +4,7 @@ export type LoginResponse = {
 }
 
 export async function login(email: string, password: string): Promise<LoginResponse> {
-    const response = await fetch('/api/auth/login', {
+    const response = await fetch('${API_BASE}/auth/login', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -22,7 +22,7 @@ export async function protectedPing(token?: string) {
   const headers: Record<string, string> = {}
   if (token) headers.Authorization = `Bearer ${token}`
 
-  const res = await fetch('/api/protected/ping', { headers })
+  const res = await fetch('${API_BASE}/protected/ping', { headers })
   const text = await res.text()
 
   if (!res.ok) throw new Error(text || `Ping failed (${res.status})`)
@@ -39,7 +39,7 @@ export async function scoreRisk(
   amount: number,
   currency: string
 ): Promise<RiskScoreResponse> {
-  const res = await fetch("/api/risk/score", {
+  const res = await fetch("${API_BASE}/risk/score", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -58,19 +58,24 @@ export async function scoreRisk(
 }
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? "/api";
-const DEMO_TOKEN = import.meta.env.VITE_DEMO_TOKEN ?? "demo-token";
 
 type HttpMethod = "GET" | "POST";
 
+function getToken(): string | null {
+  return localStorage.getItem("token");
+}
+
 export async function api<T>(
   path: string,
-  opts?: { method?: HttpMethod; body?: unknown; headers?: Record<string, string> }
+  opts?: { method?: HttpMethod; body?: unknown; headers?: Record<string, string> },
+  token?: string
 ): Promise<T> {
+  const resolvedToken = token ?? getToken();
   const res = await fetch(`${API_BASE}${path}`, {
     method: opts?.method ?? "GET",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${DEMO_TOKEN}`,
+      ...(resolvedToken ? { Authorization: `Bearer ${resolvedToken}` } : {}),
       ...(opts?.headers ?? {}),
     },
     body: opts?.body ? JSON.stringify(opts.body) : undefined,
@@ -87,6 +92,7 @@ export async function api<T>(
   return data as T;
 }
 
+
 export function newIdempotencyKey(): string {
   // modern browsers
   if (crypto?.randomUUID) return crypto.randomUUID();
@@ -94,5 +100,49 @@ export function newIdempotencyKey(): string {
   return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
+export type CreateTransferRequest = {
+  fromAccountId: string;
+  toAccountId: string;
+  amount: number;
+  currency: string;
+  memo?: string;
+};
+
+export type CreateTransferResponse = {
+  transferId: string;
+  status: string;
+  amount: number;
+  currency: string;
+  riskScore: number | null;
+  riskLevel: string | null;
+  riskReasons: string[];
+};
+
+const CORE_API_BASE = import.meta.env.VITE_CORE_API_BASE ?? "http://localhost:8080";
+
+function apiErrorText(status: number, body: { message?: string, error?: string }) {
+  // Your core-api returns ApiError; this tries to be readable either way
+  return body?.message || body?.error || JSON.stringify(body) || `HTTP ${status}`;
+}
+
+export async function createTransfer(token: string, req: CreateTransferRequest): Promise<CreateTransferResponse> {
+  const idempotencyKey = (globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`);
+
+  const r = await fetch(`${CORE_API_BASE}/api/transfers`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Idempotency-Key": idempotencyKey,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(req),
+  });
+
+  const text = await r.text();
+  const data = text ? (() => { try { return JSON.parse(text); } catch { return text; } })() : null;
+
+  if (!r.ok) throw new Error(apiErrorText(r.status, data));
+  return data as CreateTransferResponse;
+}
 
 

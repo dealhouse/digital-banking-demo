@@ -100,7 +100,7 @@ const formError =
   <div style={{ maxWidth: 1200, margin: "0 auto", padding: 16, display: "grid", gap: 16 }}>
       <h2 style={{ margin: 0 }}>Digital Banking Demo</h2>
 
-      <TransferForm accounts={accounts} onTransferSuccess={refreshAll} />
+      <TransferForm token={session.token} accounts={accounts} onTransferSuccess={refreshAll} />
 
       <AccountsLedger refreshToken={refreshToken} onAccountsLoaded={setAccounts} />
 
