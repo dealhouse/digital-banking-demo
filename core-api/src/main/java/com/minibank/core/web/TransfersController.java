@@ -16,6 +16,11 @@ import com.minibank.core.repo.RiskAssessmentRepository;
 import com.minibank.core.repo.UserRepository;
 import com.minibank.core.service.TransferService;
 
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+
 @RestController
 @RequestMapping("/api")
 @CrossOrigin(origins = "http://localhost:5173")
@@ -36,10 +41,10 @@ public class TransfersController {
     }
     
     public record CreateTransferRequest(
-        String fromAccountId,
-        String toAccountId,
-        BigDecimal amount,
-        String currency,
+        @NotNull String fromAccountId,
+        @NotNull String toAccountId,
+        @NotNull@Positive BigDecimal amount,
+        @NotBlank String currency,
         String memo
     ) {}
     
@@ -55,7 +60,7 @@ public class TransfersController {
     @PostMapping("/transfers")
     public CreateTransferResponse createTransfer(
         @RequestHeader("Idempotency-Key") String idempotencyKey,
-        @RequestBody CreateTransferRequest request) {
+        @Valid @RequestBody CreateTransferRequest request) {
             if (idempotencyKey == null || idempotencyKey.isBlank()) {
                 throw new IllegalArgumentException("Missing idempotency key header");
             }

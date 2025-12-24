@@ -9,5 +9,11 @@ class CoreApiApplicationTests {
 	@Test
 	void contextLoads() {
 	}
+	@Test
+	void jacksonIsOnClasspath() {
+		var mapper = tools.jackson.databind.json.JsonMapper.builder().build();
+		assert mapper != null;
+}
 
 }
+
