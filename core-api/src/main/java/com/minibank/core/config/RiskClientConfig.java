@@ -1,4 +1,4 @@
-package com.minibank.core;
+package com.minibank.core.config;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;

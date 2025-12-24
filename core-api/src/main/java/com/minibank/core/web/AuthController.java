@@ -1,4 +1,4 @@
-package com.minibank.core;
+package com.minibank.core.web;
 
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;

@@ -1,4 +1,4 @@
-package com.minibank.core;
+package com.minibank.core.client;
 
 import com.minibank.dto.RiskScoreRequest;
 import com.minibank.dto.RiskScoreResponse;

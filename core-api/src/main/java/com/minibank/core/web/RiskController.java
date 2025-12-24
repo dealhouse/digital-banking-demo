@@ -1,4 +1,4 @@
-package com.minibank.core;
+package com.minibank.core.web;
 
 import com.minibank.dto.RiskSandboxRequest;
 import com.minibank.dto.RiskScoreRequest;
@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.Instant;
 import java.util.*;
 
+import com.minibank.core.client.RiskScoringClient;
 import com.minibank.core.domain.RiskAssessmentEntity;
 import com.minibank.core.domain.TransferEntity;
 import com.minibank.core.repo.RiskAssessmentRepository;

@@ -1,4 +1,4 @@
-package com.minibank.core;
+package com.minibank.core.config;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
