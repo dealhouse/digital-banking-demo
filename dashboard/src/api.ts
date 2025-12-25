@@ -4,7 +4,7 @@ export type LoginResponse = {
 }
 
 export async function login(email: string, password: string): Promise<LoginResponse> {
-    const response = await fetch('${API_BASE}/auth/login', {
+    const response = await fetch(`${API_BASE}/auth/login`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -22,7 +22,7 @@ export async function protectedPing(token?: string) {
   const headers: Record<string, string> = {}
   if (token) headers.Authorization = `Bearer ${token}`
 
-  const res = await fetch('${API_BASE}/protected/ping', { headers })
+  const res = await fetch(`${API_BASE}/protected/ping`, { headers })
   const text = await res.text()
 
   if (!res.ok) throw new Error(text || `Ping failed (${res.status})`)
@@ -39,7 +39,7 @@ export async function scoreRisk(
   amount: number,
   currency: string
 ): Promise<RiskScoreResponse> {
-  const res = await fetch("${API_BASE}/risk/score", {
+  const res = await fetch(`${API_BASE}/risk/score`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -144,5 +144,8 @@ export async function createTransfer(token: string, req: CreateTransferRequest):
   if (!r.ok) throw new Error(apiErrorText(r.status, data));
   return data as CreateTransferResponse;
 }
+
+
+
 
 

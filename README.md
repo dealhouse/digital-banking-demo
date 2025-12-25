@@ -13,45 +13,92 @@ A small “bank-style” demo showing:
 - `risk-service/` — scores transfers and returns `{score, level, reasons}`
 - `dashboard/` — UI to view accounts + send transfers + show risk result
 
-## Quickstart (Mac)
-### Core API
-```bash
-cd core-api
-./gradlew bootRun
-```
+## Run locally (Mac)
 
-### Risk Service
+### Prerequisites
+- Java 17+ (Spring Boot)
+- Python 3.10+ (FastAPI)
+- Node 18+ (Dashboard)
+- Git
+
+### Ports
+- Core API: http://localhost:8080
+- Risk Service: http://localhost:8000
+- Dashboard: http://localhost:5173
+
+### 1) Risk Service (FastAPI)
 ```bash
 cd risk-service
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
 uvicorn app.main:app --reload --port 8000
 ```
 
-### Dashboard
+Open docs: http://localhost:8000/docs
+
+### 2) Core API (Spring Boot + SQLite)
+```bash
+cd core-api
+# Optional: point Core API at the risk service
+export RISK_BASE_URL=http://localhost:8000
+
+./gradlew bootRun
+```
+
+### 3) Dashboard (React)
 ```bash
 cd dashboard
 npm install
 npm run dev
 ```
 
-## EndPoints (Core API)
-- `POST /api/transfers`
-   Headers: `Authorization: Bearer demo-token, Idempotency-Key: <uuid>`
-   Body: `{ fromAccountId, toAccountId, amount, currency, memo }`
-- `POST /api/risk/score` (Optional pass-through)
+---
 
-### Testing
-#### Core Api
+## Smoke tests
+
+### Health checks
+```bash
+curl -s http://localhost:8000/docs >/dev/null && echo "risk ok"
+curl -s http://localhost:8080/api/health || true
+```
+
+### Create a transfer (with idempotency)
+```bash
+IDEMP=$(uuidgen)
+
+curl -i -X POST http://localhost:8080/api/transfers   -H "Content-Type: application/json"   -H "Authorization: Bearer demo-token"   -H "Idempotency-Key: $IDEMP"   -d '{
+    "fromAccountId": "acct_1",
+    "toAccountId": "acct_2",
+    "amount": 25.00,
+    "currency": "USD",
+    "memo": "demo"
+  }'
+```
+
+### Idempotency proof (same key + same body)
+Run the exact same command again with the same `$IDEMP`.
+You should get the *same* transfer result (no duplicate transfer created).
+
+---
+
+## Tests
+
+### Core API
 ```bash
 cd core-api
 ./gradlew test
 ```
 
-#### Risk Service
+### Risk Service
 ```bash
 cd risk-service
 pytest -q
 ```
 
 
-
-
+### Dashboard
+```bash
+cd dashboard
+npm test
+```

@@ -3,15 +3,36 @@ import { api } from "../api";
 import type { Account, LedgerEntry } from "../types";
 
 function money(n: number, ccy: string) {
-  return new Intl.NumberFormat(undefined, { style: "currency", currency: ccy }).format(n);
+  return new Intl.NumberFormat(undefined, {
+    style: "currency",
+    currency: ccy,
+  }).format(n);
+}
+
+function formatWhen(d: string) {
+  return new Date(d).toLocaleString(undefined, {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
+function shortId(id: string) {
+  if (!id) return "";
+  return `${id.slice(0, 8)}…${id.slice(-4)}`;
 }
 
 export function AccountsLedger({
   refreshToken,
   onAccountsLoaded,
+  onTransferSelect
 }: {
   refreshToken: number;
   onAccountsLoaded?: (accounts: Account[]) => void;
+  onTransferSelect?: (transferId: string) => void;
+
 }) {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [selectedId, setSelectedId] = useState<string>("");
@@ -35,9 +56,7 @@ export function AccountsLedger({
         onAccountsLoaded?.(a);
         setSelectedId((prev) => prev || a[0]?.id || "");
       } catch (e) {
-        if (e instanceof Error) {
-          setErr(e.message ?? String(e));
-        }
+        if (e instanceof Error) setErr(e.message ?? String(e));
       } finally {
         setLoadingAccounts(false);
       }
@@ -53,9 +72,7 @@ export function AccountsLedger({
         const rows = await api<LedgerEntry[]>(`/accounts/${selectedId}/ledger`);
         setLedger(rows);
       } catch (e) {
-        if (e instanceof Error) {
-          setErr(e.message ?? String(e));
-        }
+        if (e instanceof Error) setErr(e.message ?? String(e));
       } finally {
         setLoadingLedger(false);
       }
@@ -63,63 +80,137 @@ export function AccountsLedger({
   }, [selectedId, refreshToken]);
 
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "360px 1fr", gap: 16 }}>
-      <div style={{ border: "1px solid #ddd", borderRadius: 12, padding: 12 }}>
-        <h3 style={{ marginTop: 0 }}>Accounts</h3>
-        {loadingAccounts ? <p>Loading…</p> : null}
-        {err ? <p style={{ color: "crimson" }}>{err}</p> : null}
+    <div className="grid gap-4 lg:grid-cols-[280px,1fr]">
+      {/* Accounts */}
+      <div className="space-y-3">
+        <div className="flex items-baseline justify-between">
+          <div className="text-sm font-semibold text-slate-900">Accounts</div>
+          {loadingAccounts ? (
+            <span className="text-xs text-slate-500">Loading…</span>
+          ) : null}
+        </div>
 
-        <div style={{ display: "grid", gap: 8 }}>
-          {accounts.map((a) => (
-            <button
-              key={a.id}
-              onClick={() => setSelectedId(a.id)}
-              style={{
-                textAlign: "left",
-                padding: 10,
-                borderRadius: 10,
-                border: a.id === selectedId ? "2px solid #333" : "1px solid #ddd",
-                background: "white",
-                cursor: "pointer",
-              }}
-            >
-              <div style={{ fontWeight: 700 }}>{a.name}</div>
-              <div style={{ opacity: 0.8 }}>
-                {a.type} • {money(a.balance, a.currency)}
-              </div>
-              <div style={{ fontSize: 12, opacity: 0.6 }}>{a.id}</div>
-            </button>
-          ))}
+        {err ? (
+          <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+            {err}
+          </div>
+        ) : null}
+
+        <div className="space-y-2">
+          {accounts.map((a) => {
+            const active = a.id === selectedId;
+            return (
+              <button
+                key={a.id}
+                onClick={() => setSelectedId(a.id)}
+                className={[
+                  "w-full rounded-xl border px-3 py-3 text-left",
+                  "transition hover:bg-slate-50",
+                  active
+                    ? "border-slate-900 bg-slate-50"
+                    : "border-slate-200 bg-white",
+                ].join(" ")}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="truncate text-sm font-semibold text-slate-900">
+                      {a.name}
+                    </div>
+                    <div className="mt-0.5 text-xs text-slate-600">
+                      {a.type} • {money(a.balance, a.currency)}
+                    </div>
+                  </div>
+                  <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700">
+                    {a.currency}
+                  </span>
+                </div>
+
+                <div className="mt-2 font-mono text-[11px] text-slate-500">
+                  {shortId(a.id)}
+                </div>
+              </button>
+            );
+          })}
         </div>
       </div>
 
-      <div style={{ border: "1px solid #ddd", borderRadius: 12, padding: 12 }}>
-        <h3 style={{ marginTop: 0 }}>
-          Ledger {selected ? `— ${selected.name}` : ""}
-        </h3>
-
-        {loadingLedger ? <p>Loading…</p> : null}
-
-        <div style={{ display: "grid", gap: 8 }}>
-          {ledger.map((e) => (
-            <div
-              key={e.id}
-              style={{ border: "1px solid #eee", borderRadius: 10, padding: 10 }}
-            >
-              <div style={{ display: "flex", justifyContent: "space-between" }}>
-                <strong>{e.type}</strong>
-                <span>
-                  {money(e.amount, selected?.currency ?? "CAD")} • bal {money(e.balance, selected?.currency ?? "CAD")}
-                </span>
-              </div>
-              <div style={{ fontSize: 12, opacity: 0.7 }}>
-                {new Date(e.createdAt).toLocaleString()} • transfer {e.transferId}
-              </div>
-            </div>
-          ))}
-          {ledger.length === 0 && !loadingLedger ? (
-            <p style={{ opacity: 0.7 }}>No ledger entries yet.</p>
+      {/* Ledger */}
+      <div className="space-y-3">
+        <div className="flex items-baseline justify-between">
+          <div className="text-sm font-semibold text-slate-900">
+            Ledger{selected ? ` — ${selected.name}` : ""}
+          </div>
+          {loadingLedger ? (
+            <span className="text-xs text-slate-500">Loading…</span>
           ) : null}
+        </div>
+
+        {err ? (
+          <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+            {err}
+          </div>
+        ) : null}
+
+        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+          <table className="w-full text-sm">
+            <thead className="bg-slate-50 text-left text-xs text-slate-600">
+              <tr>
+                <th className="px-3 py-2">Type</th>
+                <th className="px-3 py-2">Amount</th>
+                <th className="px-3 py-2">Balance</th>
+                <th className="px-3 py-2">When</th>
+                <th className="px-3 py-2">Transfer</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-200">
+              {ledger.map((e) => {
+                const ccy = selected?.currency ?? "CAD";
+                const isCredit = e.type.toUpperCase().includes("CREDIT");
+                return (
+                  <tr key={e.id} className="bg-white">
+                    <td className="px-3 py-2">
+                      <span
+                        className={[
+                          "inline-flex rounded-full px-2 py-0.5 text-xs font-medium",
+                          isCredit
+                            ? "bg-emerald-50 text-emerald-800"
+                            : "bg-amber-50 text-amber-800",
+                        ].join(" ")}
+                      >
+                        {e.type}
+                      </span>
+                    </td>
+                    <td className="px-3 py-2">{money(e.amount, ccy)}</td>
+                    <td className="px-3 py-2 text-slate-700">
+                      {money(e.balance, ccy)}
+                    </td>
+                    <td className="px-3 py-2 text-slate-500">
+                      {formatWhen(e.createdAt)}
+                    </td>
+                    <td className="px-3 py-2 font-mono text-[11px] text-slate-500">
+                      {/* {shortId(e.transferId)} */}
+                      <button
+  className="font-mono text-xs text-slate-700 hover:underline"
+  onClick={() => onTransferSelect?.(e.transferId)}
+  title={e.transferId}
+>
+  {e.transferId.slice(0, 8)}…{e.transferId.slice(-4)}
+</button>
+
+                    </td>
+                  </tr>
+                );
+              })}
+
+              {ledger.length === 0 && !loadingLedger ? (
+                <tr>
+                  <td colSpan={5} className="px-3 py-6 text-center text-sm text-slate-500">
+                    No ledger entries yet.
+                  </td>
+                </tr>
+              ) : null}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>

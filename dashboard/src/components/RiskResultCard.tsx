@@ -1,51 +1,73 @@
-import type { RiskScoreResponse } from '../api'
+import type { RiskScoreResponse } from "../api";
 
-function scoreLabel(score: number) {
-    if (score >= 70) return {label: "High risk", note: "May require manual review."}
-    if (score >= 40) return {label: "Medium risk", note: "Proceed with caution."}
-    return {label: "Low risk", note: "Looks normal."}
+function scoreMeta(score: number) {
+  if (score >= 70) {
+    return {
+      label: "High risk",
+      note: "May require manual review.",
+      pill: "border-red-200 bg-red-50 text-red-800",
+      accent: "text-red-800",
+    };
+  }
+  if (score >= 40) {
+    return {
+      label: "Medium risk",
+      note: "Proceed with caution.",
+      pill: "border-amber-200 bg-amber-50 text-amber-800",
+      accent: "text-amber-800",
+    };
+  }
+  return {
+    label: "Low risk",
+    note: "Looks normal.",
+    pill: "border-emerald-200 bg-emerald-50 text-emerald-800",
+    accent: "text-emerald-800",
+  };
+}
+
+function humanReason(r: string) {
+  return r.replaceAll("_", " ");
 }
 
 export function RiskResultCard({ result }: { result: RiskScoreResponse }) {
-    const { label, note } = scoreLabel(result.riskScore)
+  const { label, note, pill, accent } = scoreMeta(result.riskScore);
 
-    return (
-    <div
-      style={{
-        border: "1px solid #ddd",
-        borderRadius: 12,
-        padding: 14,
-        display: "grid",
-        gap: 8,
-      }}
-    >
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-        <div style={{ fontSize: 18, fontWeight: 700 }}>Risk Score</div>
-        <div style={{ fontSize: 14 }}>{label}</div>
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="flex items-baseline justify-between gap-3">
+        <div className="text-sm font-semibold text-slate-900">Risk score</div>
+        <span className={`rounded-full border px-2 py-0.5 text-xs font-medium ${pill}`}>
+          {label}
+        </span>
       </div>
 
-      <div style={{ fontSize: 44, fontWeight: 800, lineHeight: 1 }}>
-        {result.riskScore}
-        <span style={{ fontSize: 16, fontWeight: 600, marginLeft: 6 }}>/100</span>
+      <div className="mt-2 flex items-end gap-2">
+        <div className={`text-5xl font-extrabold leading-none ${accent}`}>
+          {result.riskScore}
+        </div>
+        <div className="pb-1 text-sm font-semibold text-slate-500">/100</div>
       </div>
 
-      <div style={{ fontSize: 14, color: "#555" }}>{note}</div>
+      <div className="mt-2 text-sm text-slate-600">{note}</div>
 
-      <div style={{ marginTop: 6 }}>
-        <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 6 }}>Reasons</div>
+      <div className="mt-4">
+        <div className="text-sm font-semibold text-slate-900">Reasons</div>
 
         {result.reasons?.length ? (
-          <ul style={{ margin: 0, paddingLeft: 18 }}>
+          <div className="mt-2 flex flex-wrap gap-2">
             {result.reasons.map((r) => (
-              <li key={r} style={{ fontSize: 14 }}>
-                {r.replaceAll("_", " ")}
-              </li>
+              <span
+                key={r}
+                className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700"
+              >
+                {humanReason(r)}
+              </span>
             ))}
-          </ul>
+          </div>
         ) : (
-          <div style={{ fontSize: 14, color: "#555" }}>No flags raised.</div>
+          <div className="mt-2 text-sm text-slate-500">No flags raised.</div>
         )}
       </div>
     </div>
-  )
+  );
 }
