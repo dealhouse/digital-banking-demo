@@ -145,6 +145,70 @@ export async function createTransfer(token: string, req: CreateTransferRequest):
   return data as CreateTransferResponse;
 }
 
+export type TransferDetails = {
+  transferId: string;
+  status: string;
+  amount: number;
+  currency: string;
+  memo?: string;
+  fromAccountId: string;
+  toAccountId: string;
+  createdAt: string;
+  riskScore: number | null;
+  riskLevel: string | null;
+  riskReasons: string[];
+};
+
+export type TransferSummary = {
+  transferId: string;
+  status: string;
+  amount: number;
+  currency: string;
+  createdAt: string;
+};
+
+export async function getTransferDetails(
+  token: string,
+  transferId: string
+): Promise<TransferDetails> {
+  const r = await fetch(`${CORE_API_BASE}/api/transfers/${transferId}`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+  });
+
+  const text = await r.text();
+  const data = text ? (() => { try { return JSON.parse(text); } catch { return text; } })() : null;
+
+  if (!r.ok) throw new Error(apiErrorText(r.status, data));
+  return data as TransferDetails;
+}
+
+export async function searchTransfersByPrefix(
+  token: string,
+  prefix: string
+): Promise<TransferSummary[]> {
+  const r = await fetch(
+    `${CORE_API_BASE}/api/transfers/search?prefix=${encodeURIComponent(prefix)}`,
+    {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    }
+  );
+
+  const text = await r.text();
+  const data = text ? (() => { try { return JSON.parse(text); } catch { return text; } })() : null;
+
+  if (!r.ok) throw new Error(apiErrorText(r.status, data));
+  return data as TransferSummary[];
+}
+
+
 
 
 

@@ -97,8 +97,6 @@ export function TransferForm({
       ? "border-amber-200 bg-amber-50 text-amber-800"
       : "border-emerald-200 bg-emerald-50 text-emerald-800";
 
-  
-
   return (
     <div className="space-y-4">
       {err ? (
@@ -184,8 +182,17 @@ export function TransferForm({
 
       {/* Action row */}
       <div className="flex items-center justify-between gap-3">
-        <div className="min-h-[20px] text-sm text-red-700">
-          {formError ? formError : ""}
+        {/* Error + inline risk label */}
+        <div className="flex flex-col gap-1">
+          <div className="min-h-[20px] text-sm text-red-700">
+            {formError ?? ""}
+          </div>
+          <div className="text-xs text-slate-700" aria-live="polite">
+            <span className="font-medium">Risk:</span>{" "}
+            <span data-testid="risk-label">
+              {last ? `${last.riskLevel} (${last.riskScore})` : "—"}
+            </span>
+          </div>
         </div>
 
         <button
