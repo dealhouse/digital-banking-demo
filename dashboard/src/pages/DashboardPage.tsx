@@ -287,7 +287,7 @@ function bumpAll() {
           <div className="grid gap-6 lg:grid-cols-2">
             <Card title="Auth Ping" subtitle="Quick token check">
               <div className="space-y-3">
-                <GhostButton onClick={runPing}>Test Auth Ping</GhostButton>
+                <GhostButton onClick={runPing}>Test Ping</GhostButton>
                 {pingError && <Alert variant="error">{pingError}</Alert>}
                 {pingResult && <Alert>{JSON.stringify(pingResult, null, 2)}</Alert>}
               </div>
