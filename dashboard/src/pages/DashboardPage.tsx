@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
+import type { RiskFlagItem } from "../types";
 import { protectedPing, scoreRisk, type RiskScoreResponse } from "../api";
+import { api } from "../api";
 import { RiskResultCard } from "../components/RiskResultCard";
 import { RiskFlags } from "../components/RiskFlags";
 import { AccountsLedger } from "../components/AccountsLedger";
@@ -60,27 +62,8 @@ export default function DashboardPage({
     }
   }
 
-  async function refreshRiskCount() {
-  try {
-    // Use the same endpoint RiskFlags uses.
-    // If it returns an array:
-    const res = await fetch(`/api/risk/flags?minScore=20`, {
-      headers: { Authorization: `Bearer ${session.token}` },
-    });
-    if (!res.ok) throw new Error("Failed risk count");
-    const data = await res.json();
 
-    // If endpoint returns an array:
-    setRiskCount(Array.isArray(data) ? data.length : data.totalElements ?? data.content?.length ?? 0);
-  } catch {
-    setRiskCount(0); // fail soft for demo
-  }
-}
 
-useEffect(() => {
-  refreshRiskCount();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-}, [session.token]);
 
 
 
@@ -90,7 +73,12 @@ useEffect(() => {
   const [riskResult, setRiskResult] = useState<RiskScoreResponse | null>(null);
   const [riskError, setRiskError] = useState<string | null>(null);
   const [riskLoading, setRiskLoading] = useState(false);
-  const [riskCount, setRiskCount] = useState<number | null>(null);
+  const [riskCount, setRiskCount] = useState(0);
+  const [riskMinScore, setRiskMinScore] = useState(() => {
+  const raw = localStorage.getItem("riskMinScore");
+  const v = raw ? Number(raw) : 20;
+  return Number.isFinite(v) ? v : 20;
+});
 
   const amountNum = Number(amount);
   const currencyClean = currency.trim().toUpperCase();
@@ -128,6 +116,31 @@ const [lastRiskAt, setLastRiskAt] = useState<Date | null>(null);
 
 const [selectedTransferId, setSelectedTransferId] = useState<string | null>(null);
 
+useEffect(() => {
+  localStorage.setItem("riskMinScore", String(riskMinScore));
+}, [riskMinScore]);
+
+useEffect(() => {
+  if (tab === "risk") return; // let RiskFlags drive count while visible
+
+  let cancelled = false;
+
+  (async () => {
+    try {
+      const data = await api<RiskFlagItem[]>(
+        `/risk/flags?minScore=${riskMinScore}`,
+        undefined,
+        session.token
+      );
+      if (!cancelled) setRiskCount(data.length);
+    } catch {
+      if (!cancelled) setRiskCount(0);
+    }
+  })();
+
+  return () => { cancelled = true; };
+}, [session.token, riskRefreshToken, tab, riskMinScore]);
+
 
 function bumpAccounts() {
   setAccountsRefreshToken((x) => x + 1);
@@ -136,7 +149,6 @@ function bumpAccounts() {
 function bumpRisk() {
   setRiskRefreshToken((x) => x + 1);
   setLastRiskAt(new Date());
-  refreshRiskCount()
 }
 function bumpAll() {
   bumpAccounts();
@@ -179,7 +191,6 @@ function bumpAll() {
             <TabButton active={tab === "risk"} onClick={() => setTab("risk")}>
   <span className="flex items-center gap-2">
     Risk & Compliance
-    {riskCount !== null ? (
       <span
         className={[
           "inline-flex min-w-[1.5rem] items-center justify-center rounded-full px-2 py-0.5 text-xs font-semibold",
@@ -189,7 +200,6 @@ function bumpAll() {
       >
         {riskCount}
       </span>
-    ) : null}
   </span>
 </TabButton>
 
@@ -243,6 +253,8 @@ function bumpAll() {
                 refreshToken={riskRefreshToken} 
                 accounts={accounts} 
                 onCountChange={setRiskCount}
+                minScore={riskMinScore}
+                onMinScoreChange={setRiskMinScore}
                 />
               </Card>
             </div>

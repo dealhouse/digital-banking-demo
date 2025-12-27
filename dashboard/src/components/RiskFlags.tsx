@@ -35,12 +35,15 @@ export function RiskFlags({
   refreshToken,
   accounts,
   onCountChange,
+  minScore,
+  onMinScoreChange
 }: {
   refreshToken: number;
   accounts: Account[];
   onCountChange?: (count: number) => void;
+  minScore?: number;
+  onMinScoreChange: (score: number) => void;
 }) {
-  const [minScore, setMinScore] = useState(1);
   const [items, setItems] = useState<RiskFlagItem[]>([]);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -97,7 +100,7 @@ export function RiskFlags({
               value={minScore}
               onChange={(e) => { 
                 const v = Number(e.target.value);
-                setMinScore(Number.isFinite(v) ? Math.max(0, v) : 1);
+                onMinScoreChange(Number.isFinite(v) ? Math.max(0, v) : 0);
                 }}
               className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
             />
