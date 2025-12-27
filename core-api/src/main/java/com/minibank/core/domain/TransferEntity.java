@@ -129,4 +129,9 @@ public class TransferEntity {
         this.memo = memo;
     }
     
+    public void setCreatedAt(Instant createdAt) {
+        this.createdAt = createdAt;
+    }
 }
+
+

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { protectedPing, scoreRisk, type RiskScoreResponse } from "../api";
 import { RiskResultCard } from "../components/RiskResultCard";
 import { RiskFlags } from "../components/RiskFlags";
@@ -60,6 +60,30 @@ export default function DashboardPage({
     }
   }
 
+  async function refreshRiskCount() {
+  try {
+    // Use the same endpoint RiskFlags uses.
+    // If it returns an array:
+    const res = await fetch(`/api/risk/flags?minScore=20`, {
+      headers: { Authorization: `Bearer ${session.token}` },
+    });
+    if (!res.ok) throw new Error("Failed risk count");
+    const data = await res.json();
+
+    // If endpoint returns an array:
+    setRiskCount(Array.isArray(data) ? data.length : data.totalElements ?? data.content?.length ?? 0);
+  } catch {
+    setRiskCount(0); // fail soft for demo
+  }
+}
+
+useEffect(() => {
+  refreshRiskCount();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [session.token]);
+
+
+
   // Risk sandbox
   const [amount, setAmount] = useState("600");
   const [currency, setCurrency] = useState("CAD");
@@ -112,6 +136,7 @@ function bumpAccounts() {
 function bumpRisk() {
   setRiskRefreshToken((x) => x + 1);
   setLastRiskAt(new Date());
+  refreshRiskCount()
 }
 function bumpAll() {
   bumpAccounts();
