@@ -14,6 +14,7 @@ import com.minibank.core.domain.RiskAssessmentEntity;
 import com.minibank.core.domain.TransferEntity;
 import com.minibank.core.repo.RiskAssessmentRepository;
 import com.minibank.core.repo.UserRepository;
+import com.minibank.core.service.StatsService;
 import com.minibank.core.service.TransferService;
 
 import org.springframework.http.HttpStatus;
@@ -36,15 +37,19 @@ public class TransfersController {
     private final com.minibank.core.repo.TransferRepository transferRepo;
     private final RiskAssessmentRepository riskRepo;
     private final UserRepository users;
+    private final StatsService statsService;
+
     
     public TransfersController(TransferService transferService,
                             com.minibank.core.repo.TransferRepository transferRepo,
                             RiskAssessmentRepository riskRepo,
-                            UserRepository users) {
+                            UserRepository users,
+                            StatsService statsService) {
         this.transferService = transferService;
         this.transferRepo = transferRepo;
         this.riskRepo = riskRepo;
         this.users = users;
+        this.statsService = statsService;
     }
     
     private String demoUserId() {
@@ -196,4 +201,14 @@ public List<TransferSummaryResponse> searchTransfers(@RequestParam String prefix
             }
             return out;
         }
+        @CrossOrigin(origins = "http://localhost:5173")
+        @GetMapping("/transfers/stats/24h")
+        public StatsService.TransferWindowStatsDto stats24h(
+        @RequestParam(required = false) String currency
+        ) {
+    return statsService.last24h(demoUserId(), currency);
+    }
 }
+
+
+

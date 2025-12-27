@@ -7,6 +7,7 @@ import java.util.UUID;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
@@ -14,7 +15,12 @@ import jakarta.persistence.UniqueConstraint;
 @Entity
 @Table(
     name = "transfers",
-    uniqueConstraints = @UniqueConstraint(columnNames = {"userId", "idempotencyKey"}))
+    uniqueConstraints = @UniqueConstraint(columnNames = {"userId", "idempotencyKey"}),
+    indexes = {
+    @Index(name = "idx_transfers_user_created", columnList = "userId, createdAt"),
+    @Index(name = "idx_transfers_user_status_created", columnList = "userId, status, createdAt")
+  }
+)
 public class TransferEntity {
     @Id
     private String id;

@@ -28,6 +28,7 @@ public class TransferService {
     private final LedgerEntryRepository ledger;
     private final RiskAssessmentRepository riskRepo;
     private final RiskClient riskClient;
+    private final StatsService statsService; 
     private static final Logger log = LoggerFactory.getLogger(TransferService.class);
 
     public TransferService(
@@ -35,14 +36,15 @@ public class TransferService {
             TransferRepository transfers,
             LedgerEntryRepository ledger,
             RiskAssessmentRepository riskRepo,
-            RiskClient riskClient
-
+            RiskClient riskClient,
+            StatsService statsService
     ) {
         this.accounts = accounts;
         this.transfers = transfers;
         this.ledger = ledger;
         this.riskRepo = riskRepo;
         this.riskClient = riskClient;
+        this.statsService = statsService;
     }
     
     
@@ -119,8 +121,9 @@ public class TransferService {
         
         ledger.saveAll(List.of(debit, credit));
         
-        int last24hCount = 0;
-        var last24hTotal = BigDecimal.ZERO; 
+        StatsService.TransferWindowStatsDto last24h = statsService.last24h(userId, currency);
+        int last24hCount = last24h.count();
+        BigDecimal last24hTotal = last24h.sum();
         
         RiskClient.ScoreResponse riskResp;
         try {
