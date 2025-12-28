@@ -208,6 +208,36 @@ export async function searchTransfersByPrefix(
   return data as TransferSummary[];
 }
 
+export type PageResp<T> = {
+  content: T[];
+  first: boolean;
+  last: boolean;
+  number: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+};
+
+export async function listTransfersPage(
+  token: string,
+  page = 0,
+  size = 25
+): Promise<PageResp<TransferSummary>> {
+  const r = await fetch(`${CORE_API_BASE}/api/transfers?page=${page}&size=${size}`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+  });
+
+  const text = await r.text();
+  const data = text ? (() => { try { return JSON.parse(text); } catch { return text; } })() : null;
+  if (!r.ok) throw new Error(apiErrorText(r.status, data));
+  return data as PageResp<TransferSummary>;
+}
+
+
 
 
 

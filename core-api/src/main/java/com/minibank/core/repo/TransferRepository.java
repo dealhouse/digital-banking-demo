@@ -8,6 +8,9 @@ import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 
 import com.minibank.core.domain.TransferEntity;
 public interface TransferRepository extends JpaRepository<TransferEntity, String> {
@@ -39,5 +42,7 @@ public interface TransferRepository extends JpaRepository<TransferEntity, String
         @Param("status") String status,
         @Param("currency") String currency
       );
+
+    Page<TransferEntity> findByUserIdOrderByCreatedAtDesc(String userId,Pageable pageable);
   
 }

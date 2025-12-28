@@ -20,6 +20,10 @@ import com.minibank.core.client.RiskClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
+
+
 
 @Service
 public class TransferService {
@@ -29,7 +33,9 @@ public class TransferService {
     private final RiskAssessmentRepository riskRepo;
     private final RiskClient riskClient;
     private final StatsService statsService; 
+    private final ObjectMapper objectMapper;
     private static final Logger log = LoggerFactory.getLogger(TransferService.class);
+    
 
     public TransferService(
             AccountRepository accounts,
@@ -37,7 +43,8 @@ public class TransferService {
             LedgerEntryRepository ledger,
             RiskAssessmentRepository riskRepo,
             RiskClient riskClient,
-            StatsService statsService
+            StatsService statsService,
+            ObjectMapper objectMapper
     ) {
         this.accounts = accounts;
         this.transfers = transfers;
@@ -45,6 +52,7 @@ public class TransferService {
         this.riskRepo = riskRepo;
         this.riskClient = riskClient;
         this.statsService = statsService;
+        this.objectMapper = objectMapper;
     }
     
     
@@ -166,17 +174,14 @@ public class TransferService {
         return t;
         
     }
-    private static String toJsonArray(List<String> reasons) {
-        if (reasons == null || reasons.isEmpty()) return "[]";
-    StringBuilder sb = new StringBuilder();
-    sb.append("[");
-    for (int i = 0; i < reasons.size(); i++) {
-        if (i > 0) sb.append(",");
-        String s = reasons.get(i).replace("\\", "\\\\").replace("\"", "\\\"");
-        sb.append("\"").append(s).append("\"");
+    private String toJsonArray(List<String> reasons) {
+    try {
+        return objectMapper.writeValueAsString(reasons == null ? List.of() : reasons);
+    } catch (JacksonException e) {
+        // fail-soft: keep the service running even if serialization somehow fails
+        return "[]";
     }
-    sb.append("]");
-    return sb.toString();
-    }
+}
+
 
 }

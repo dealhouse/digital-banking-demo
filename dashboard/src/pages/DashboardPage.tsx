@@ -6,10 +6,10 @@ import { RiskResultCard } from "../components/RiskResultCard";
 import { RiskFlags } from "../components/RiskFlags";
 import { AccountsLedger } from "../components/AccountsLedger";
 import { TransferForm } from "../components/TransferForm";
-import { TransferSearchByPrefix } from "../components/TransferSearchByPrefix";
 import { TransferLookup } from "../components/TransferLookup"; // your existing details component
 import type { Account } from "../types";
 import { Alert, Card, GhostButton, Label, PrimaryButton, TextInput } from "../components/UI";
+import { TransferInspector } from "../components/TransferInspector";
 
 type Session = { token: string; email: string };
 type Tab = "transfers" | "risk" | "tools";
@@ -349,33 +349,9 @@ function bumpAll() {
     </div>
   </div>
 </Card>
-    <Card
-      title="Transfer search"
-      subtitle="Search transfers by ID prefix"
-    >
-      <TransferSearchByPrefix
-        token={session.token}
-        accounts={accounts}
-        onSelectTransferId={setSelectedTransferId}
-      />
-    </Card>
-
-    <Card
-      title="Transfer details"
-      subtitle={
-        selectedTransferId
-          ? "Selected from search or ledger"
-          : "Search or click a transfer to inspect details"
-      }
-    >
-      <TransferLookup
-        token={session.token}
-        accounts={accounts}
-        initialId={selectedTransferId ?? undefined}
-      />
-    </Card>
-
-
+    <Card title="Transfer inspector" subtitle="Search by ID prefix and inspect details">
+  <TransferInspector token={session.token} accounts={accounts} initialId={selectedTransferId ?? undefined} />
+</Card>
             <Card title="Notes" subtitle="What this tab is for">
               <div className="text-sm text-slate-600 space-y-2">
                 <p>Keep developer-only utilities here (token checks, echo endpoints, raw JSON).</p>

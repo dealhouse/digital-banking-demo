@@ -12,10 +12,12 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 
 import com.minibank.core.domain.AccountEntity;
+import com.minibank.core.domain.LedgerEntryEntity;
 import com.minibank.core.domain.RiskAssessmentEntity;
 import com.minibank.core.domain.TransferEntity;
 import com.minibank.core.domain.UserEntity;
 import com.minibank.core.repo.AccountRepository;
+import com.minibank.core.repo.LedgerEntryRepository;
 import com.minibank.core.repo.RiskAssessmentRepository;
 import com.minibank.core.repo.TransferRepository;
 import com.minibank.core.repo.UserRepository;
@@ -32,6 +34,7 @@ public class DemoTransferSeeder {
             AccountRepository accounts,
             TransferRepository transfers,
             RiskAssessmentRepository risks,
+            LedgerEntryRepository ledger,
             ObjectMapper objectMapper
     ) {
         return args -> {
@@ -40,8 +43,10 @@ public class DemoTransferSeeder {
             System.out.println("[DemoTransferSeeder] START");
 
             UserEntity user = users.findByEmail(email).orElse(null);
-            System.out.println("[DemoTransferSeeder] demo user not found, exiting");
-            if (user == null) return;
+            if (user == null) {
+                System.out.println("[DemoTransferSeeder] demo user not found, exiting");
+                return;
+            }
 
             // Avoid reseeding if our first seed transfer already exists
             if (transfers.findByUserIdAndIdempotencyKey(user.getId(), "seed-burst-1").isPresent()) {
@@ -107,6 +112,25 @@ System.out.println("[DemoTransferSeeder] seeding transfers...");
                 from.setBalance(from.getBalance().subtract(amt));
                 to.setBalance(to.getBalance().add(amt));
                 accounts.saveAll(List.of(from, to));
+
+                LedgerEntryEntity debit = new LedgerEntryEntity();
+                debit.setAccountId(from.getId());
+                debit.setTransferId(t.getId());
+                debit.setType("DEBIT");
+                debit.setAmount(amt);
+                debit.setBalance(from.getBalance());              // ✅ balance AFTER debit
+                debit.setCreatedAt(t.getCreatedAt());             // match transfer time
+
+                LedgerEntryEntity credit = new LedgerEntryEntity();
+                credit.setAccountId(to.getId());
+                credit.setTransferId(t.getId());
+                credit.setType("CREDIT");
+                credit.setAmount(amt);
+                credit.setBalance(to.getBalance());               // ✅ balance AFTER credit
+                credit.setCreatedAt(t.getCreatedAt());
+
+                ledger.saveAll(List.of(debit, credit));
+
 
                 // Risk assessment (local mirror of your FastAPI rules)
                 RiskCalc rc = computeRisk(amt, count, total);

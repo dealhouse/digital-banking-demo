@@ -34,6 +34,11 @@ export function AccountsLedger({
   onTransferSelect?: (transferId: string) => void;
 
 }) {
+
+  const PAGE_SIZE = 25;
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+
+
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [selectedId, setSelectedId] = useState<string>("");
   const [ledger, setLedger] = useState<LedgerEntry[]>([]);
@@ -69,6 +74,7 @@ export function AccountsLedger({
       try {
         setErr(null);
         setLoadingLedger(true);
+        setVisibleCount(PAGE_SIZE);
         const rows = await api<LedgerEntry[]>(`/accounts/${selectedId}/ledger`);
         setLedger(rows);
       } catch (e) {
@@ -78,6 +84,12 @@ export function AccountsLedger({
       }
     })();
   }, [selectedId, refreshToken]);
+
+  const visibleLedger = useMemo(
+  () => ledger.slice(0, visibleCount),
+  [ledger, visibleCount]
+);
+
 
   return (
     <div className="grid gap-4 lg:grid-cols-[280px,1fr]">
@@ -151,7 +163,7 @@ export function AccountsLedger({
           </div>
         ) : null}
 
-        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+        <div className="max-h-[520px] overflow-auto rounded-xl border border-slate-200 bg-white">
           <table className="w-full text-sm">
             <thead className="bg-slate-50 text-left text-xs text-slate-600">
               <tr>
@@ -163,7 +175,7 @@ export function AccountsLedger({
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200">
-              {ledger.map((e) => {
+              {visibleLedger.map((e) => {
                 const ccy = selected?.currency ?? "CAD";
                 const isCredit = e.type.toUpperCase().includes("CREDIT");
                 return (
@@ -211,6 +223,23 @@ export function AccountsLedger({
               ) : null}
             </tbody>
           </table>
+          {!loadingLedger && ledger.length > visibleCount ? (
+  <div className="border-t border-slate-200 bg-slate-50 px-3 py-2">
+    <button
+      className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-900 hover:bg-slate-50"
+      onClick={() =>
+        setVisibleCount((v) => Math.min(v + PAGE_SIZE, ledger.length))
+      }
+    >
+      Load more ({Math.min(PAGE_SIZE, ledger.length - visibleCount)} more)
+    </button>
+  </div>
+) : !loadingLedger && ledger.length > 0 ? (
+  <div className="border-t border-slate-200 bg-slate-50 px-3 py-2 text-center text-xs text-slate-500">
+    End of history
+  </div>
+) : null}
+
         </div>
       </div>
     </div>

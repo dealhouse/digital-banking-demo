@@ -87,5 +87,9 @@ public class LedgerEntryEntity {
         this.balance = balance;
     }
 
+    public void setCreatedAt(Instant createdAt) {
+        this.createdAt = createdAt;
+    }
+
 
 }
