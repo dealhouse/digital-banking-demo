@@ -76,8 +76,7 @@ describe("App shell", () => {
 
     expect(screen.getByText(/auth ping/i)).toBeInTheDocument();
     expect(screen.getByText(/data refresh/i)).toBeInTheDocument();
-    expect(screen.getByText(/transfer search/i)).toBeInTheDocument();
-    expect(screen.getByText(/transfer details/i)).toBeInTheDocument();
+    expect(screen.getByText(/transfer inspector/i)).toBeInTheDocument();
     expect(screen.getByText(/notes/i)).toBeInTheDocument();
   });
 });
