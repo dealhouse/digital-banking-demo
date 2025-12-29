@@ -84,7 +84,7 @@ export async function scoreRisk(
 
 // Default "/api" assumes a dev proxy (Vite) that forwards to core-api.
 // Override via VITE_API_BASE if you deploy with a different gateway/base path.
-const API_BASE = import.meta.env.VITE_API_BASE ?? "/api";
+const API_BASE = import.meta.env.VITE_API_BASE ;
 
 type HttpMethod = "GET" | "POST";
 
@@ -135,9 +135,6 @@ export function newIdempotencyKey(): string {
   return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
-// Direct core-api base URL (used when we don't rely on Vite proxy).
-// In a production deploy, you'd usually point this at the same origin / gateway as API_BASE.
-const CORE_API_BASE = import.meta.env.VITE_CORE_API_BASE ?? "http://localhost:8080";
 
 
 function apiErrorText(status: number, body: { message?: string, error?: string }) {
@@ -153,7 +150,7 @@ export async function createTransfer(token: string, req: TransferRequest, idempo
   // core-api should treat identical keys as "return the original transfer result".
 
 
-  const r = await fetch(`${CORE_API_BASE}/api/transfers`, {
+  const r = await fetch(`${API_BASE}/api/transfers`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${token}`,
@@ -196,7 +193,7 @@ export async function getTransferDetails(
   token: string,
   transferId: string
 ): Promise<TransferDetails> {
-  const r = await fetch(`${CORE_API_BASE}/api/transfers/${transferId}`, {
+  const r = await fetch(`${API_BASE}/api/transfers/${transferId}`, {
     method: "GET",
     headers: {
       Authorization: `Bearer ${token}`,
@@ -216,7 +213,7 @@ export async function searchTransfersByPrefix(
   prefix: string
 ): Promise<TransferSummary[]> {
   const r = await fetch(
-    `${CORE_API_BASE}/api/transfers/search?prefix=${encodeURIComponent(prefix)}`,
+    `${API_BASE}/api/transfers/search?prefix=${encodeURIComponent(prefix)}`,
     {
       method: "GET",
       headers: {
@@ -250,7 +247,7 @@ export async function listTransfersPage(
   page = 0,
   size = 25
 ): Promise<PageResp<TransferSummary>> {
-  const r = await fetch(`${CORE_API_BASE}/api/transfers?page=${page}&size=${size}`, {
+  const r = await fetch(`${API_BASE}/api/transfers?page=${page}&size=${size}`, {
     method: "GET",
     headers: {
       Authorization: `Bearer ${token}`,
