@@ -24,3 +24,9 @@ core-api/data/
 # IDE
 .vscode/
 .idea/
+
+# --- env files ---
+.env
+.env.* 
+!.env.example
+!.env.template
