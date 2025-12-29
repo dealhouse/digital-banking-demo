@@ -1,22 +1,41 @@
+// Thin client for the Core API (Spring Boot).
+// Responsibilities:
+// - attach demo auth header (Authorization: Bearer demo-token)
+// - normalize errors into a simple shape the UI can render
+// - keep endpoint paths/types in one place (single source of truth)
+// Notes:
+// - API_BASE is typically a same-origin path ("/api") so Vite can proxy in dev.
+// - CORE_API_BASE is a direct absolute URL used when bypassing the proxy (local dev convenience).
+// - Some endpoints use custom fetch() wrappers (idempotency header / pageable responses) rather than api<T>().
+
+
+// -------------------- Auth --------------------
+
+import type { TransferRequest, TransferResponse } from "./types";
 export type LoginResponse = {
-    token: string;
-    email: string;
+  token: string;
+  email: string;
 }
 
 export async function login(email: string, password: string): Promise<LoginResponse> {
-    const response = await fetch(`${API_BASE}/auth/login`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-    });
-    if (!response.ok) {
-        const text = await response.text();
-        throw new Error(text || `Login failed (${response.status})`);
-    }
-    return response.json();
+  const response = await fetch(`${API_BASE}/auth/login`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ email, password }),
+  });
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(text || `Login failed (${response.status})`);
+  }
+  return response.json();
 }
+
+// -------------------- Dev tools --------------------
+// Demo auth check used during dev to verify the token is being sent correctly.
+// If this fails with 401, the UI isn't attaching Authorization properly.
+
 
 export async function protectedPing(token?: string) {
   const headers: Record<string, string> = {}
@@ -29,10 +48,16 @@ export async function protectedPing(token?: string) {
   return JSON.parse(text)
 }
 
+// -------------------- Risk scoring --------------------
+// Calls core-api -> which forwards to risk-service, then returns explainable reasons.
+
 export type RiskScoreResponse = {
   riskScore: number
   reasons: string[]
 }
+
+// Sandbox scoring endpoint (used by Tools tab / quick checks).
+// Returns only {riskScore, reasons}. The full transfer flow uses /api/transfers instead.
 
 export async function scoreRisk(
   token: string,
@@ -57,13 +82,21 @@ export async function scoreRisk(
   return JSON.parse(text) as RiskScoreResponse
 }
 
+// Default "/api" assumes a dev proxy (Vite) that forwards to core-api.
+// Override via VITE_API_BASE if you deploy with a different gateway/base path.
 const API_BASE = import.meta.env.VITE_API_BASE ?? "/api";
 
 type HttpMethod = "GET" | "POST";
 
+// Token is stored by LoginPage after calling login().
+// api<T>() will use localStorage by default so most callers don't thread token manually.
+
 function getToken(): string | null {
   return localStorage.getItem("token");
 }
+
+// -------------------- Generic JSON client --------------------
+// Used by simple endpoints; handles JSON parse + consistent error extraction.
 
 export async function api<T>(
   path: string,
@@ -81,6 +114,7 @@ export async function api<T>(
     body: opts?.body ? JSON.stringify(opts.body) : undefined,
   });
 
+  // Read as text first so we can surface backend error bodies even when status != 2xx.
   const text = await res.text();
   const data = text ? JSON.parse(text) : null;
 
@@ -92,6 +126,7 @@ export async function api<T>(
   return data as T;
 }
 
+// Used to demonstrate idempotency behavior (same key => same result) when core-api supports it.
 
 export function newIdempotencyKey(): string {
   // modern browsers
@@ -100,33 +135,23 @@ export function newIdempotencyKey(): string {
   return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
-export type CreateTransferRequest = {
-  fromAccountId: string;
-  toAccountId: string;
-  amount: number;
-  currency: string;
-  memo?: string;
-};
-
-export type CreateTransferResponse = {
-  transferId: string;
-  status: string;
-  amount: number;
-  currency: string;
-  riskScore: number | null;
-  riskLevel: string | null;
-  riskReasons: string[];
-};
-
+// Direct core-api base URL (used when we don't rely on Vite proxy).
+// In a production deploy, you'd usually point this at the same origin / gateway as API_BASE.
 const CORE_API_BASE = import.meta.env.VITE_CORE_API_BASE ?? "http://localhost:8080";
+
 
 function apiErrorText(status: number, body: { message?: string, error?: string }) {
   // Your core-api returns ApiError; this tries to be readable either way
   return body?.message || body?.error || JSON.stringify(body) || `HTTP ${status}`;
 }
 
-export async function createTransfer(token: string, req: CreateTransferRequest): Promise<CreateTransferResponse> {
-  const idempotencyKey = (globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`);
+// -------------------- Transfers --------------------
+// These endpoints use direct fetch() so we can attach Idempotency-Key and match core-api paths exactly.
+
+export async function createTransfer(token: string, req: TransferRequest, idempotencyKey: string = newIdempotencyKey()): Promise<TransferResponse> {
+  // Idempotency-Key prevents accidental double submits (refresh/click-spam/network retry).
+  // core-api should treat identical keys as "return the original transfer result".
+
 
   const r = await fetch(`${CORE_API_BASE}/api/transfers`, {
     method: "POST",
@@ -142,7 +167,7 @@ export async function createTransfer(token: string, req: CreateTransferRequest):
   const data = text ? (() => { try { return JSON.parse(text); } catch { return text; } })() : null;
 
   if (!r.ok) throw new Error(apiErrorText(r.status, data));
-  return data as CreateTransferResponse;
+  return data as TransferResponse;
 }
 
 export type TransferDetails = {
@@ -207,6 +232,8 @@ export async function searchTransfersByPrefix(
   if (!r.ok) throw new Error(apiErrorText(r.status, data));
   return data as TransferSummary[];
 }
+
+// Mirrors Spring Data Page<T> JSON shape returned by core-api for paginated endpoints.
 
 export type PageResp<T> = {
   content: T[];

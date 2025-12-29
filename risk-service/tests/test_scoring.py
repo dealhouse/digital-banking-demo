@@ -1,3 +1,9 @@
+"""
+Unit tests for scoring rules.
+Goal: prove each rule triggers the expected reason code and contributes to the score.
+These tests are the “spec” for risk logic.
+"""
+
 import pytest
 from datetime import datetime, timezone
 from fastapi.testclient import TestClient
@@ -7,14 +13,13 @@ from app.main import app
 
 client = TestClient(app)
 
-SCORE_PATH = "/risk/score"  # confirmed from your output
+SCORE_PATH = "/risk/score"  
 
 def post_score(payload: dict) -> dict:
     r = client.post(SCORE_PATH, json=jsonable_encoder(payload))
     assert r.status_code == 200, f"{r.status_code} {r.text} (path={SCORE_PATH})"
     data = r.json()
 
-    # Match your actual API response shape
     assert "riskScore" in data, data
     assert "reasons" in data, data
     assert isinstance(data["riskScore"], int), data

@@ -1,5 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
-import { api, newIdempotencyKey } from "../api";
+// TransferForm submits a transfer to core-api, then shows the returned risk result.
+// On success, it triggers a parent refresh so balances/ledger update immediately.
+
+import { useRef, useEffect, useMemo, useState, } from "react";
+import { newIdempotencyKey, createTransfer } from "../api";
 import type { Account, TransferRequest, TransferResponse } from "../types";
 
 function money(n: number, ccy: string) {
@@ -10,6 +13,7 @@ function shortId(id?: string) {
   if (!id) return "";
   return `${id.slice(0, 8)}…${id.slice(-4)}`;
 }
+
 
 export function TransferForm({
   token,
@@ -50,15 +54,20 @@ export function TransferForm({
 
   const formError =
     !fromId ? "Choose a source account." :
-    !toId ? "Choose a destination account." :
-    sameAccount ? "From and To must be different accounts." :
-    !amountValid ? "Amount must be a positive number." :
-    null;
+      !toId ? "Choose a destination account." :
+        sameAccount ? "From and To must be different accounts." :
+          !amountValid ? "Amount must be a positive number." :
+            null;
 
   const canSubmit = !formError && !busy;
 
+  // Keep a stable idempotency key for this "attempt" so retries don't create duplicates.
+  // Rotate only after a successful response.
+  const idemRef = useRef<string>(newIdempotencyKey());
+
   async function submit() {
     if (!canSubmit) return;
+
 
     try {
       setErr(null);
@@ -73,16 +82,10 @@ export function TransferForm({
         memo: memo.trim(),
       };
 
-      const idKey = newIdempotencyKey();
-
-      const resp = await api<TransferResponse>(
-        "/transfers",
-        { method: "POST", body: req, headers: { "Idempotency-Key": idKey } },
-        token
-      );
-
+      const resp = await createTransfer(token, req, idemRef.current)
       setLast(resp);
       onTransferSuccess();
+      idemRef.current = newIdempotencyKey();
     } catch (e) {
       if (e instanceof Error) setErr(e.message ?? String(e));
     } finally {
@@ -94,8 +97,8 @@ export function TransferForm({
     last?.riskLevel?.toLowerCase() === "high"
       ? "border-red-200 bg-red-50 text-red-800"
       : last?.riskLevel?.toLowerCase() === "medium"
-      ? "border-amber-200 bg-amber-50 text-amber-800"
-      : "border-emerald-200 bg-emerald-50 text-emerald-800";
+        ? "border-amber-200 bg-amber-50 text-amber-800"
+        : "border-emerald-200 bg-emerald-50 text-emerald-800";
 
   return (
     <div className="space-y-4">

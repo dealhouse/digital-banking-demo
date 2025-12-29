@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import type { Account } from "../types";
-// import { api } from "../api";
 import { Alert, GhostButton, Label, TextInput } from "./UI";
 import { getTransferDetails } from "../api";
 
@@ -46,31 +45,31 @@ export function TransferLookup({
   }, [accounts]);
 
   async function fetchTransfer(idRaw: string) {
-  const id = idRaw.trim();
-  if (!id) return;
+    const id = idRaw.trim();
+    if (!id) return;
 
-  setBusy(true);
-  setErr(null);
-  setData(null);
-  try {
-    const resp = await getTransferDetails(token, id);
-    setData(resp);
-  } catch (e) {
-    setErr((e as Error).message ?? String(e));
-  } finally {
-    setBusy(false);
+    setBusy(true);
+    setErr(null);
+    setData(null);
+    try {
+      const resp = await getTransferDetails(token, id);
+      setData(resp);
+    } catch (e) {
+      setErr((e as Error).message ?? String(e));
+    } finally {
+      setBusy(false);
+    }
   }
-}
 
 
   async function handleLookup() {
     await fetchTransfer(transferId);
   }
 
-  // 🔹 Auto-load when initialId changes (user clicked a ledger row)
+  // Auto-load when initialId changes (user clicked a ledger row)
   useEffect(() => {
     if (!initialId) return;
-    if (initialId === transferId) return; // already showing
+    if (initialId === transferId) return;
 
     setTransferId(initialId);
     fetchTransfer(initialId);

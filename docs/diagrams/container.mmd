@@ -1,0 +1,26 @@
+sequenceDiagram
+    autonumber
+
+    participant U as Demo User
+    participant D as Dashboard (React/TS)
+    participant A as Core API (Spring Boot)
+    participant DB as SQLite
+    participant R as Risk Service (FastAPI)
+
+    U->>D: Loads webpage
+    D->>A: GET /api/accounts + ledger
+    A->>DB: Read accounts + ledger entries
+    DB-->>A: Rows
+    A-->>D: JSON responses
+    D-->>U: Renders dashboard
+
+    U->>D: Submits transfer
+    D->>A: POST /api/transfers (Idempotency-Key)
+    A->>DB: Validate accounts + balance
+    DB-->>A: Account state
+    A->>R: POST /score
+    R-->>A: {riskScore, reasons}
+    A->>DB: Persist transfer + ledger entries + risk assessment
+    DB-->>A: OK
+    A-->>D: CreateTransferResponse
+    D-->>U: Updates UI (ledger + risk)

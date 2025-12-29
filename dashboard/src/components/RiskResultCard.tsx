@@ -1,3 +1,6 @@
+// Displays the risk score + reason codes returned by risk-service (via core-api).
+// Reasons are meant to be stable identifiers (used by UI + tests), not user prose.
+
 import type { RiskScoreResponse } from "../api";
 
 function scoreMeta(score: number) {

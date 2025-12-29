@@ -1,3 +1,5 @@
+// TransferInspector: lightweight dev-tooling UI to inspect a transfer by id and see raw details.
+
 import { useState } from "react";
 import type { Account } from "../types";
 import { TransferSearchByPrefix } from "./TransferSearchByPrefix";

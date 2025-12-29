@@ -1,3 +1,6 @@
+// Loads accounts once, then fetches ledger entries for the selected account.
+// Keeps loading states separate so account list and ledger can update independently.
+
 import { useEffect, useMemo, useState } from "react";
 import { api } from "../api";
 import type { Account, LedgerEntry } from "../types";
@@ -86,9 +89,9 @@ export function AccountsLedger({
   }, [selectedId, refreshToken]);
 
   const visibleLedger = useMemo(
-  () => ledger.slice(0, visibleCount),
-  [ledger, visibleCount]
-);
+    () => ledger.slice(0, visibleCount),
+    [ledger, visibleCount]
+  );
 
 
   return (
@@ -202,12 +205,12 @@ export function AccountsLedger({
                     <td className="px-3 py-2 font-mono text-[11px] text-slate-500">
                       {/* {shortId(e.transferId)} */}
                       <button
-  className="font-mono text-xs text-slate-700 hover:underline"
-  onClick={() => onTransferSelect?.(e.transferId)}
-  title={e.transferId}
->
-  {e.transferId.slice(0, 8)}…{e.transferId.slice(-4)}
-</button>
+                        className="font-mono text-xs text-slate-700 hover:underline"
+                        onClick={() => onTransferSelect?.(e.transferId)}
+                        title={e.transferId}
+                      >
+                        {e.transferId.slice(0, 8)}…{e.transferId.slice(-4)}
+                      </button>
 
                     </td>
                   </tr>
@@ -224,21 +227,21 @@ export function AccountsLedger({
             </tbody>
           </table>
           {!loadingLedger && ledger.length > visibleCount ? (
-  <div className="border-t border-slate-200 bg-slate-50 px-3 py-2">
-    <button
-      className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-900 hover:bg-slate-50"
-      onClick={() =>
-        setVisibleCount((v) => Math.min(v + PAGE_SIZE, ledger.length))
-      }
-    >
-      Load more ({Math.min(PAGE_SIZE, ledger.length - visibleCount)} more)
-    </button>
-  </div>
-) : !loadingLedger && ledger.length > 0 ? (
-  <div className="border-t border-slate-200 bg-slate-50 px-3 py-2 text-center text-xs text-slate-500">
-    End of history
-  </div>
-) : null}
+            <div className="border-t border-slate-200 bg-slate-50 px-3 py-2">
+              <button
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-900 hover:bg-slate-50"
+                onClick={() =>
+                  setVisibleCount((v) => Math.min(v + PAGE_SIZE, ledger.length))
+                }
+              >
+                Load more ({Math.min(PAGE_SIZE, ledger.length - visibleCount)} more)
+              </button>
+            </div>
+          ) : !loadingLedger && ledger.length > 0 ? (
+            <div className="border-t border-slate-200 bg-slate-50 px-3 py-2 text-center text-xs text-slate-500">
+              End of history
+            </div>
+          ) : null}
 
         </div>
       </div>

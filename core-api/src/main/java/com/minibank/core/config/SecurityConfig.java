@@ -1,3 +1,10 @@
+/**
+ * Demo-only auth:
+ * - Accepts Authorization: Bearer demo-token
+ * - Not production security (no users DB, no JWT validation, no refresh tokens)
+ * Purpose: keep the demo gated without adding full auth complexity.
+ */
+
 package com.minibank.core.config;
 
 import org.springframework.context.annotation.Bean;

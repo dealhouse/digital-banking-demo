@@ -1,3 +1,8 @@
+// DashboardPage is the composition root for the main app view:
+// - loads accounts + selected account ledger
+// - renders transfer form and refreshes data on success
+// - renders risk flags + latest risk result for explainability
+
 import { useEffect, useMemo, useState } from "react";
 import type { RiskFlagItem } from "../types";
 import { protectedPing, scoreRisk, type RiskScoreResponse } from "../api";

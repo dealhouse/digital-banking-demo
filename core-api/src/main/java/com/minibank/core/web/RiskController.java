@@ -1,3 +1,9 @@
+/**
+ * Risk endpoints:
+ * - scoring sandbox/echo endpoints are dev tools (not part of core transfer flow)
+ * - risk flags query returns persisted RiskAssessments for UI display
+ */
+
 package com.minibank.core.web;
 
 import com.minibank.dto.RiskSandboxRequest;
@@ -108,15 +114,7 @@ public class RiskController {
 }
 
 
-//     Dev tool
-//     @GetMapping("/echo-test")
-//     public Map<String, Object> echoTest() {
-//     return riskScoringClient.echoSimple(Map.of(
-//             "hello", "world",
-//             "n", 123,
-//             "ok", true
-//     ));
-// }
+
 
 
 

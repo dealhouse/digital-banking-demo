@@ -25,8 +25,6 @@ import com.minibank.core.repo.UserRepository;
 @Configuration
 public class DemoTransferSeeder {
 
-    
-
     @Bean
     @Order(2)
     CommandLineRunner seedDemoTransfers(
@@ -35,8 +33,7 @@ public class DemoTransferSeeder {
             TransferRepository transfers,
             RiskAssessmentRepository risks,
             LedgerEntryRepository ledger,
-            ObjectMapper objectMapper
-    ) {
+            ObjectMapper objectMapper) {
         return args -> {
             String email = "demo@digitalbanking.dev";
 
@@ -50,24 +47,26 @@ public class DemoTransferSeeder {
 
             // Avoid reseeding if our first seed transfer already exists
             if (transfers.findByUserIdAndIdempotencyKey(user.getId(), "seed-burst-1").isPresent()) {
-  System.out.println("[DemoTransferSeeder] seed already present, exiting");
-  return;
-}
+                System.out.println("[DemoTransferSeeder] seed already present, exiting");
+                return;
+            }
 
-List<AccountEntity> userAccounts = accounts.findAllByUserId(user.getId());
-System.out.println("[DemoTransferSeeder] accounts found: " + userAccounts.size());
+            List<AccountEntity> userAccounts = accounts.findAllByUserId(user.getId());
+            System.out.println("[DemoTransferSeeder] accounts found: " + userAccounts.size());
 
-AccountEntity from = findByName(userAccounts, "Velocity Test");
-AccountEntity to = findByName(userAccounts, "High-Interest Savings");
+            AccountEntity from = findByName(userAccounts, "Velocity Test");
+            AccountEntity to = findByName(userAccounts, "High-Interest Savings");
 
-if (from == null || to == null) {
-  System.out.println("[DemoTransferSeeder] missing accounts: from=" + (from != null) + ", to=" + (to != null));
-  return;
-}
+            if (from == null || to == null) {
+                System.out.println(
+                        "[DemoTransferSeeder] missing accounts: from=" + (from != null) + ", to=" + (to != null));
+                return;
+            }
 
-System.out.println("[DemoTransferSeeder] seeding transfers...");
+            System.out.println("[DemoTransferSeeder] seeding transfers...");
 
-            // Create a burst inside the "last 24h" window (all created now, which is within 24h)
+            // Create a burst inside the "last 24h" window (all created now, which is within
+            // 24h)
             // Mix amounts to trigger: large_amount + velocity + high_24h_total
             List<BigDecimal> amounts = List.of(
                     bd("120.00"),
@@ -77,19 +76,19 @@ System.out.println("[DemoTransferSeeder] seeding transfers...");
                     bd("300.00"),
                     bd("90.00"),
                     bd("700.00"),
-                    bd("150.00")
-            );
+                    bd("150.00"));
 
             // Optional: tiny sleep spacing makes createdAt differ slightly (not required)
-            // But since createdAt has no setter, all will still be "now-ish" from PrePersist.
+            // But since createdAt has no setter, all will still be "now-ish" from
+            // PrePersist.
 
             for (int i = 0; i < amounts.size(); i++) {
                 BigDecimal amt = amounts.get(i);
 
-                // Compute window stats BEFORE inserting this transfer (so the risk reasons make sense)
+                // Compute window stats BEFORE inserting this transfer (so the risk reasons make
+                // sense)
                 Instant since = Instant.now().minus(Duration.ofHours(24));
-                TransferRepository.WindowStats stats =
-                        transfers.windowStats(user.getId(), since, "APPROVED", "CAD");
+                TransferRepository.WindowStats stats = transfers.windowStats(user.getId(), since, "APPROVED", "CAD");
 
                 int count = stats.getTransferCount();
                 BigDecimal total = stats.getTransferTotal() == null ? BigDecimal.ZERO : stats.getTransferTotal();
@@ -118,19 +117,18 @@ System.out.println("[DemoTransferSeeder] seeding transfers...");
                 debit.setTransferId(t.getId());
                 debit.setType("DEBIT");
                 debit.setAmount(amt);
-                debit.setBalance(from.getBalance());              // ✅ balance AFTER debit
-                debit.setCreatedAt(t.getCreatedAt());             // match transfer time
+                debit.setBalance(from.getBalance()); // ✅ balance AFTER debit
+                debit.setCreatedAt(t.getCreatedAt()); // match transfer time
 
                 LedgerEntryEntity credit = new LedgerEntryEntity();
                 credit.setAccountId(to.getId());
                 credit.setTransferId(t.getId());
                 credit.setType("CREDIT");
                 credit.setAmount(amt);
-                credit.setBalance(to.getBalance());               // ✅ balance AFTER credit
+                credit.setBalance(to.getBalance()); // ✅ balance AFTER credit
                 credit.setCreatedAt(t.getCreatedAt());
 
                 ledger.saveAll(List.of(debit, credit));
-
 
                 // Risk assessment (local mirror of your FastAPI rules)
                 RiskCalc rc = computeRisk(amt, count, total);
@@ -169,13 +167,16 @@ System.out.println("[DemoTransferSeeder] seeding transfers...");
             reasons.add("high_24h_total");
         }
 
-        if (score > 100) score = 100;
+        if (score > 100)
+            score = 100;
         return new RiskCalc(score, reasons);
     }
 
     private String scoreToLevel(int score) {
-        if (score >= 70) return "HIGH";
-        if (score >= 40) return "MEDIUM";
+        if (score >= 70)
+            return "HIGH";
+        if (score >= 40)
+            return "MEDIUM";
         return "LOW";
     }
 
@@ -186,11 +187,11 @@ System.out.println("[DemoTransferSeeder] seeding transfers...");
     private static class RiskCalc {
         final int score;
         final java.util.List<String> reasons;
+
         RiskCalc(int score, java.util.List<String> reasons) {
             this.score = score;
             this.reasons = reasons;
         }
     }
 
-    
 }

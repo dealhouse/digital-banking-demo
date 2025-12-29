@@ -1,3 +1,6 @@
+// App sets up the demo shell (login gate + main dashboard tabs).
+// Auth is intentionally simplified for the demo: demo-token is used by api.ts.
+
 import { useState } from "react";
 import LoginPage from "./LoginPage";
 import DashboardPage from "./pages/DashboardPage";

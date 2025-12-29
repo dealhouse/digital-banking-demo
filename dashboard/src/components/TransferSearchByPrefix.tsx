@@ -1,4 +1,3 @@
-// src/components/TransferSearchByPrefix.tsx
 import { useState } from "react";
 import type { Account } from "../types";
 import { searchTransfersByPrefix, type TransferSummary } from "../api";
@@ -14,7 +13,6 @@ function shortId(id: string) {
 
 export function TransferSearchByPrefix({
   token,
-  // accounts,              // you might use this later to show names
   onSelectTransferId,
 }: {
   token: string;

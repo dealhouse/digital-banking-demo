@@ -1,24 +1,30 @@
 # Digital Banking Demo (Monorepo)
 
-A small “bank-style” demo showing:
-- Java Spring Boot Core API (SQLite)
-- Python FastAPI Risk Scoring service
-- React + TypeScript dashboard
+A small “bank-style” demo showing a **transfer/ledger flow** with **idempotency** and a separate **risk scoring service**:
+
+- **Core API**: Java **Spring Boot** + **SQLite**
+- **Risk Service**: Python **FastAPI**
+- **Dashboard**: **React + TypeScript**
 
 ![CI](https://github.com/dealhouse/digital-banking-demo/actions/workflows/ci.yml/badge.svg)
 
+## Why this is “bank-style”
+- **Ledger-style history**: transfers create **ledger entries** and update balances.
+- **Idempotency**: protects against duplicate transfers on retries.
+- **Service boundary**: risk scoring lives in a separate service (typical microservice integration).
+- **Validation + consistent errors**: inputs are validated and errors are returned predictably.
 
 ## Architecture
-- `core-api/` — REST API for accounts + transfers, idempotency, validation, error handling
-- `risk-service/` — scores transfers and returns `{score, level, reasons}`
-- `dashboard/` — UI to view accounts + send transfers + show risk result
+- `core-api/` — REST API for accounts + transfers, idempotency, validation, error handling (SQLite persistence)
+- `risk-service/` — scores transfers and returns `{ "riskScore": number, "reasons": string[] }`
+- `dashboard/` — UI to view accounts + send transfers + inspect risk flags/results
 
 ## Run locally (Mac)
 
 ### Prerequisites
-- Java 17+ (Spring Boot)
-- Python 3.10+ (FastAPI)
-- Node 18+ (Dashboard)
+- Java 17+
+- Python 3.10+
+- Node 18+
 - Git
 
 ### Ports
@@ -26,7 +32,14 @@ A small “bank-style” demo showing:
 - Risk Service: http://localhost:8000
 - Dashboard: http://localhost:5173
 
-### 1) Risk Service (FastAPI)
+### Option A: Run everything via script
+```bash
+./scripts/run_all_mac.sh
+```
+
+### Option B: Run each service manually
+
+#### 1) Risk Service (FastAPI)
 ```bash
 cd risk-service
 python3 -m venv .venv
@@ -37,7 +50,7 @@ uvicorn app.main:app --reload --port 8000
 
 Open docs: http://localhost:8000/docs
 
-### 2) Core API (Spring Boot + SQLite)
+#### 2) Core API (Spring Boot + SQLite)
 ```bash
 cd core-api
 # Optional: point Core API at the risk service
@@ -46,7 +59,7 @@ export RISK_BASE_URL=http://localhost:8000
 ./gradlew bootRun
 ```
 
-### 3) Dashboard (React)
+#### 3) Dashboard (React)
 ```bash
 cd dashboard
 npm install
@@ -60,45 +73,64 @@ npm run dev
 ### Health checks
 ```bash
 curl -s http://localhost:8000/docs >/dev/null && echo "risk ok"
-curl -s http://localhost:8080/api/health || true
+curl -s http://localhost:8080/api/health
+```
+
+### List accounts (so you can pick IDs)
+```bash
+curl -s http://localhost:8080/api/accounts \
+  -H "Authorization: Bearer demo-token"
 ```
 
 ### Create a transfer (with idempotency)
 ```bash
 IDEMP=$(uuidgen)
 
-curl -i -X POST http://localhost:8080/api/transfers   -H "Content-Type: application/json"   -H "Authorization: Bearer demo-token"   -H "Idempotency-Key: $IDEMP"   -d '{
-    "fromAccountId": "acct_1",
-    "toAccountId": "acct_2",
+curl -i -X POST http://localhost:8080/api/transfers \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer demo-token" \
+  -H "Idempotency-Key: $IDEMP" \
+  -d '{
+    "fromAccountId": "<FROM_ACCOUNT_ID>",
+    "toAccountId": "<TO_ACCOUNT_ID>",
     "amount": 25.00,
-    "currency": "USD",
+    "currency": "CAD",
     "memo": "demo"
   }'
 ```
 
 ### Idempotency proof (same key + same body)
 Run the exact same command again with the same `$IDEMP`.
-You should get the *same* transfer result (no duplicate transfer created).
+You should get the **same** `transferId` back (no duplicate transfer created).
 
 ---
 
 ## Tests
 
-### Core API
+### Core API (Spring Boot)
 ```bash
 cd core-api
 ./gradlew test
 ```
 
-### Risk Service
+### Risk Service (pytest)
 ```bash
 cd risk-service
 pytest -q
 ```
 
-
-### Dashboard
+### Dashboard (vitest)
 ```bash
 cd dashboard
-npm test
+npm run test
+```
+
+---
+
+## Repo structure (high-level)
+```
+core-api/       Spring Boot API + SQLite
+risk-service/   FastAPI risk scoring service
+dashboard/      React + TypeScript UI
+scripts/        helper scripts (e.g., run_all_mac.sh, smoke_test.sh)
 ```

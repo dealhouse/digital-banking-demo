@@ -9,16 +9,15 @@ import org.springframework.web.client.RestClient;
 @Configuration
 public class RiskClientConfig {
 
-    @Bean
-    RestClient riskRestClient(RestClient.Builder builder,
-                              @Value("${risk.base-url}") String baseUrl) {
+        @Bean
+        RestClient riskRestClient(RestClient.Builder builder,
+                        @Value("${risk.base-url}") String baseUrl) {
 
-        HttpComponentsClientHttpRequestFactory factory =
-                new HttpComponentsClientHttpRequestFactory();
+                HttpComponentsClientHttpRequestFactory factory = new HttpComponentsClientHttpRequestFactory();
 
-        return builder
-                .baseUrl(baseUrl)
-                .requestFactory(factory)
-                .build();
-    }
+                return builder
+                                .baseUrl(baseUrl)
+                                .requestFactory(factory)
+                                .build();
+        }
 }

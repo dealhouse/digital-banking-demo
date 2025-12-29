@@ -1,3 +1,9 @@
+/**
+ * HTTP client to the FastAPI risk-service.
+ * Contract: POST /score -> { riskScore, reasons[] }.
+ * Base URL comes from config; keep paths relative to avoid double-prefix issues.
+ */
+
 package com.minibank.core.client;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -17,7 +23,6 @@ public class RiskClient {
     this.restClient = RestClient.builder().baseUrl(baseUrl).build();
   }
 
-  // Matches FastAPI request schema
   public record ScoreRequest(
       String userId,
       String fromAccountId,
@@ -29,7 +34,6 @@ public class RiskClient {
       BigDecimal last24hTransferTotal
   ) {}
 
-  // Matches FastAPI response schema
   public record ScoreResponse(
       int riskScore,
       List<String> reasons

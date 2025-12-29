@@ -11,12 +11,13 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
-
 import com.minibank.core.domain.TransferEntity;
+
 public interface TransferRepository extends JpaRepository<TransferEntity, String> {
 
   interface WindowStats {
     int getTransferCount();
+
     BigDecimal getTransferTotal();
   }
 
@@ -36,13 +37,12 @@ public interface TransferRepository extends JpaRepository<TransferEntity, String
           and t.status = :status
           and (:currency is null or t.currency = :currency)
       """)
-      WindowStats windowStats(
-        @Param("userId") String userId,
-        @Param("since") Instant since,
-        @Param("status") String status,
-        @Param("currency") String currency
-      );
+  WindowStats windowStats(
+      @Param("userId") String userId,
+      @Param("since") Instant since,
+      @Param("status") String status,
+      @Param("currency") String currency);
 
-    Page<TransferEntity> findByUserIdOrderByCreatedAtDesc(String userId,Pageable pageable);
-  
+  Page<TransferEntity> findByUserIdOrderByCreatedAtDesc(String userId, Pageable pageable);
+
 }

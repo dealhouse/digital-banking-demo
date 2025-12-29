@@ -1,3 +1,10 @@
+
+/**
+ * Adapter around RiskClient used by the service layer.
+ * Keeps Core API decoupled from transport details (HTTP, JSON shape).
+ */
+
+
 package com.minibank.core.client;
 
 import com.minibank.dto.RiskScoreRequest;
@@ -7,7 +14,6 @@ import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
-// import java.util.Map;
 @Component
 public class RiskScoringClient {
     private final RestClient restClient;
@@ -28,18 +34,9 @@ public class RiskScoringClient {
                 .body(RiskScoreResponse.class);
 
     }
-    // Dev tool
-    // public Map echoSimple(Map<String, Object> payload) {
-    //     return restClient.post()
-    //             .uri("/echo") // base-url includes /risk
-    //             .contentType(MediaType.APPLICATION_JSON)
-    //             .body(payload)
-    //             .retrieve()
-    //             .body(Map.class);
-    // }
+    
+
 }
 
 
-
-// ...
 

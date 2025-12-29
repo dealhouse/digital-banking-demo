@@ -1,3 +1,8 @@
+/**
+ * CORS for local dashboard dev (Vite).
+ * In production you’d restrict origins differently (or serve UI behind same domain).
+ */
+
 package com.minibank.core.config;
 
 import org.springframework.context.annotation.Configuration;

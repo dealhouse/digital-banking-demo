@@ -1,3 +1,9 @@
+/**
+ * Core API for MiniBank: Accounts + Transfers + Ledger + persisted RiskAssessments.
+ * Local-dev friendly: SQLite file DB + separate FastAPI risk-service.
+ * Dashboard calls this API from http://localhost:5173 (CORS enabled).
+ */
+
 package com.minibank.core;
 
 import org.springframework.boot.SpringApplication;

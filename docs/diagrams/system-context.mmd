@@ -1,0 +1,24 @@
+%% System Context — Digital Banking Demo
+flowchart LR
+
+  %% --- Nodes ---
+  user["👤 Demo user<br/>Logs in, creates transfers,<br/>views ledger and risk flags"]
+  risk["Risk Service (FastAPI)<br/>Scores transfers and returns<br/>risk score + reasons"]
+
+  subgraph SYS["Digital Banking Demo"]
+    ui["Dashboard (React + TypeScript)<br/>UI for transfers, ledger, risk review"]
+    api["Core API (Spring Boot)<br/>Accounts, transfers, idempotency,<br/>risk persistence, stats"]
+    db[("SQLite DB<br/>users, accounts, transfers,<br/>ledger entries, risk assessments")]
+  end
+
+  %% --- Relationships ---
+  user --> ui
+  ui -->|"REST API<br/>HTTP/JSON"| api
+  api -->|"Reads/Writes"| db
+  api -->|"Requests risk scoring<br/>HTTP/JSON"| risk
+
+  %% --- Styling (optional but helps readability) ---
+  style SYS stroke-dasharray: 6 4,stroke:#94a3b8,fill:transparent
+
+
+

@@ -1,3 +1,8 @@
+/**
+ * Centralized error mapping so controllers/services can throw domain exceptions.
+ * Guarantees a consistent JSON error shape for the dashboard.
+ */
+
 package com.minibank.core.web.error;
 
 import java.time.Instant;
