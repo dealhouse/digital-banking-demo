@@ -32,6 +32,14 @@ A small “bank-style” demo showing a **transfer/ledger flow** with **idempote
 - Risk Service: http://localhost:8000
 - Dashboard: http://localhost:5173
 
+### Dashboard API routing (dev)
+The dashboard uses a Vite dev-server proxy:
+- Browser requests go to `http://localhost:5173/api/*`
+- Vite proxies `/api/*` to the Core API at `http://localhost:8080`
+
+So the UI does not need to call `:8080` directly during local development.
+
+
 ### Option A: Run everything via script
 ```bash
 ./scripts/run_all_mac.sh
